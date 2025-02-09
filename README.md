@@ -1,6 +1,6 @@
-## sat-maneuver-pred
+# sat-maneuver-pred
 
-# Getting Started
+## Getting Started
 
 1. Create a python virtual environment
 
