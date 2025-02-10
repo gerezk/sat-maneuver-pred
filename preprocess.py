@@ -8,7 +8,7 @@ class Preprocess:
 
     def generate_csv(self):
         # dump ELSET data from JSON into df
-        df = pd.read_json(f'data/TLE/{self.args.scc}.json', convert_dates=['EPOCH'])
+        df = pd.read_json(f'data/ELSET/{self.args.scc}.json', convert_dates=['EPOCH'])
         features = ['EPOCH',
                     'ECCENTRICITY',
                     'INCLINATION',
@@ -24,7 +24,7 @@ class Preprocess:
         with open(f'data/maneuver_timestamps/{self.args.scc}.yaml', 'r') as stream:
             maneuvers = yaml.load(stream, Loader=yaml.FullLoader)
         maneuvers = maneuvers['manoeuvre_timestamps']
-        maneuvers = [i for i in maneuvers if i > df['EPOCH'][0]] # remove timestamps prior to first TLE
+        maneuvers = [i for i in maneuvers if i > df['EPOCH'][0]] # remove timestamps prior to first ELSET
 
         # add column labeling if sat maneuvered following given ELSET
         maneuvered_feature = []
