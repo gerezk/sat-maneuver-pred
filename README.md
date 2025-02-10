@@ -6,7 +6,7 @@ The model could help SDA analysts in sensor tasking. For maneuvers within the es
 
 ## Getting Started
 
-1. Create a python virtual environment
+1. Create a python virtual environment (used Python 3.13.1)
 
 ```sh
 python3 -m venv .venv
