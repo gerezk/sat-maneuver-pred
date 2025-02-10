@@ -13,3 +13,4 @@ if __name__ == '__main__':
         os.makedirs('./data/preprocessed')
     if not os.path.exists(f'./data/preprocessed/{args.scc}.csv'):
         Preprocess(args)
+    Preprocess(args)

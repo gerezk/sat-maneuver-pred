@@ -1,18 +1,5 @@
-import satkit
-import math
 import pandas as pd
 import yaml
-
-def to_sma(mean_motion):
-    """ Convert mean_motion (revs/day) to sma (km)
-    Parameters
-    ----------
-    mean_motion : float
-        Satellite's revs/day, extracted from TLE
-    """
-    mean_motion_rad_per_sec = mean_motion * (1.0 / 86400.0) * (2. * math.pi / 1.0)
-    return (satkit.consts.GM ** (1. / 3.) / mean_motion_rad_per_sec ** (2. / 3.)) / 1000
-
 
 class Preprocess:
     def __init__(self, args):
@@ -20,48 +7,37 @@ class Preprocess:
         self.generate_csv()
 
     def generate_csv(self):
-        catalog = satkit.TLE.from_file(f'data/TLE/{self.args.scc}.tle')
+        # dump ELSET data from JSON into df
+        df = pd.read_json(f'data/TLE/{self.args.scc}.json', convert_dates=['EPOCH'])
+        features = ['EPOCH',
+                    'ECCENTRICITY',
+                    'INCLINATION',
+                    'RA_OF_ASC_NODE',
+                    'ARG_OF_PERICENTER',
+                    'SEMIMAJOR_AXIS',
+                    'MEAN_ANOMALY']
+        non_features = [i for i in list(df) if i not in features]
+        df.drop(non_features, axis=1, inplace=True)
+        df.reset_index(drop=True, inplace=True)
 
-        # initialize dataframe
-        headers = ['epoch',
-                   'SMA (km)',
-                   'eccentricity',
-                   'inclination (deg)',
-                   'arg of perigee (deg)',
-                   'mean anomaly (deg)',
-                   'maneuvered']
-        df = pd.DataFrame(columns=headers)
         # extract maneuver data from yaml
         with open(f'data/maneuver_timestamps/{self.args.scc}.yaml', 'r') as stream:
             maneuvers = yaml.load(stream, Loader=yaml.FullLoader)
         maneuvers = maneuvers['manoeuvre_timestamps']
-        maneuvers = [i for i in maneuvers if i > catalog[0].epoch.datetime(True).replace(tzinfo=None)] # remove timestamps prior to first TLE
-        # get COEs from TLEs - RAAN missing for now since satkit doesn't have a RAAN property
-        for index, TLE in enumerate(catalog):
-            epoch = TLE.epoch
-            sma = to_sma(TLE.mean_motion)
-            eccen = TLE.eccen
-            inclination = TLE.inclination
-            arg_of_perigee = TLE.arg_of_perigee
-            mean_anomaly = TLE.mean_anomaly
-            maneuvered = 0 # 0 -> no maneuver, 1 -> last TLE prior to maneuver
+        maneuvers = [i for i in maneuvers if i > df['EPOCH'][0]] # remove timestamps prior to first TLE
 
-            # determine if satellite maneuvered
-            try:
-                t_0 = epoch.datetime(True).replace(tzinfo=None)
-                t_1 = catalog[index + 1].epoch.datetime(True).replace(tzinfo=None)
-                if  t_0 < maneuvers[0] < t_1:
-                    maneuvered  = 1
+        # add column labeling if sat maneuvered following given ELSET
+        maneuvered_feature = []
+        try:
+            for index in range(df.shape[0]):
+                if  df['EPOCH'][index] < maneuvers[0] < df['EPOCH'][index + 1] and len(maneuvers) > 0: # find ELSET immediately prior to maneuver
+                    maneuvered_feature.append(1)
                     maneuvers.pop(0)
-            except IndexError:
-                pass
-            # append COEs from TLE to df using a dict
-            # could be more efficient to create dict with all TLE data first then convert to df
-            temp = {}
-            data = [epoch, sma, eccen, inclination, arg_of_perigee, mean_anomaly, maneuvered]
-            for i in range(len(data)):
-                temp[headers[i]] = [data[i]]
-            data = pd.DataFrame(temp)
-            df = pd.concat([df, data], ignore_index=True)
+                else:
+                    maneuvered_feature.append(0)
+        except IndexError: # reached last maneuver, fill rest of column with 0
+            for index in range(df.shape[0] - len(maneuvered_feature)):
+                maneuvered_feature.append(0)
+        df['MANEUVERED'] = maneuvered_feature
 
         df.to_csv(f'data/preprocessed/{self.args.scc}.csv', index=False)
