@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from preprocess import Preprocess
+from preprocess import json_to_csv
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -12,5 +12,5 @@ if __name__ == '__main__':
     if not Path('./data/preprocessed').exists():
         Path('./data/preprocessed').mkdir()
     if not Path(f'./data/preprocessed/{args.scc}.csv').exists():
-        Preprocess(args)
-    Preprocess(args)
+        json_to_csv(args.scc)
+    # json_to_csv(args.scc)
