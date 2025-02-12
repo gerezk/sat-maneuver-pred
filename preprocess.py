@@ -1,14 +1,24 @@
 import pandas as pd
 import yaml
+from pathlib import Path
+
+def get_maneuvers(scc):
+    """ pull maneuver data from yaml and return as df
+    :param scc: str
+    :return: df
+    """
+    with open(Path(f'data/maneuver_timestamps/{scc}.yaml'), 'r') as stream:
+        maneuvers = yaml.load(stream, Loader=yaml.FullLoader)
+    return maneuvers['manoeuvre_timestamps']
 
 class Preprocess:
     def __init__(self, args):
         self.args = args
-        self.generate_csv()
+        self.json_to_csv()
 
-    def generate_csv(self):
+    def json_to_csv(self):
         # dump ELSET data from JSON into df
-        df = pd.read_json(f'data/ELSET/{self.args.scc}.json', convert_dates=['EPOCH'])
+        df = pd.read_json(Path(f'data/ELSET/{self.args.scc}.json'), convert_dates=['EPOCH'])
         features = ['EPOCH',
                     'ECCENTRICITY',
                     'INCLINATION',
@@ -20,10 +30,8 @@ class Preprocess:
         df.drop(non_features, axis=1, inplace=True)
         df.reset_index(drop=True, inplace=True)
 
-        # extract maneuver data from yaml
-        with open(f'data/maneuver_timestamps/{self.args.scc}.yaml', 'r') as stream:
-            maneuvers = yaml.load(stream, Loader=yaml.FullLoader)
-        maneuvers = maneuvers['manoeuvre_timestamps']
+        # get maneuver data
+        maneuvers = get_maneuvers(self.args.scc)
         maneuvers = [i for i in maneuvers if i > df['EPOCH'][0]] # remove timestamps prior to first ELSET
 
         # add column labeling if sat maneuvered following given ELSET
@@ -40,4 +48,4 @@ class Preprocess:
                 maneuvered_feature.append(0)
         df['MANEUVERED'] = maneuvered_feature
 
-        df.to_csv(f'data/preprocessed/{self.args.scc}.csv', index=False)
+        df.to_csv(Path(f'data/preprocessed/{self.args.scc}.csv'), index=False)
