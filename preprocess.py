@@ -11,7 +11,7 @@ def get_maneuvers(scc):
         maneuvers = yaml.load(stream, Loader=yaml.FullLoader)
     return maneuvers['manoeuvre_timestamps']
 
-def json_to_csv(scc):
+def preprocess(scc, csv):
     # dump ELSET data from JSON into df
     df = pd.read_json(Path(f'data/ELSET/{scc}.json'), convert_dates=['EPOCH'])
     features = ['EPOCH',
@@ -43,4 +43,14 @@ def json_to_csv(scc):
             maneuvered_feature.append(0)
     df['MANEUVERED'] = maneuvered_feature
 
-    df.to_csv(Path(f'data/preprocessed/{scc}.csv'), index=False)
+    if csv is True:
+        df.to_csv(Path(f'data/preprocessed/{scc}.csv'), index=False)
+    return df
+
+def get_tle(scc):
+    """ Extract TLEs from a json containing ELSET data
+    :param scc: str
+    :return: two-column df containing TLEs
+    """
+    df = pd.read_json(Path(f'data/ELSET/{scc}.json'), convert_dates=['EPOCH'])
+    return df[['TLE_LINE1', 'TLE_LINE2']]

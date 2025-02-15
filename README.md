@@ -6,28 +6,28 @@ The model could help SDA analysts in sensor tasking. For maneuvers within the es
 
 ## Getting Started
 
-1. Create a python virtual environment (used Python 3.13.1)
+Conda is required since orekit is used for propagating ELSETs; the library is most easily accessible from conda-forge.
+
+1. Create a conda environment
 
 ```sh
-python3 -m venv .venv
+conda env create --file environment.yml
 ```
 
-2. Activate virtual environment 
-
-- Mac / Linux
+2. Activate the environment
 
 ```sh
-source .venv/bin/activate
+conda activate sat_pred
 ```
 
-- Windows
+3. Install orekit from conda-forge
 
 ```sh
-.venv\Scripts\activate
+conda install -c conda-forge orekit
 ```
 
-3. Install requirements
+4. Download Orekit data as a library using pip
 
 ```sh
-pip install -r requirements.txt
+pip install git+https://gitlab.orekit.org/orekit/orekit-data.git
 ```
