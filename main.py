@@ -13,9 +13,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Preprocess ELSET
-    if not Path('./data/preprocessed').exists():
-        Path('./data/preprocessed').mkdir()
-    if args.csv: preprocess(args.scc)
+    if args.csv:
+        if not Path('./data/preprocessed').exists():
+            Path('./data/preprocessed').mkdir()
+        preprocess(args.scc)
 
     # # Propagate TLE
     # propagate(args.scc, args.predict, args.time_step)
